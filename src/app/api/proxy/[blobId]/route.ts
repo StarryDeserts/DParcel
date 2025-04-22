@@ -3,13 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 // Walrus服务器地址
 const AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space";
 
-// 正确处理NextJS App Router中的动态路由
+// 将此路由设置为动态路由，允许在静态导出中使用
+export const dynamic = "force-dynamic";
+
+// 使用Next.js 15.2.3兼容的动态路由处理方式
 export async function GET(
   request: NextRequest,
-  context: { params: { blobId: string } }
+  { params }: { params: Promise<{ blobId: string }> }
 ) {
-  // 从context中直接获取blobId
-  const { blobId } = context.params;
+  // 等待params解析完成
+  const resolvedParams = await params;
+  const blobId = resolvedParams.blobId;
   
   if (!blobId) {
     return NextResponse.json({ error: "缺少blobId参数" }, { status: 400 });
