@@ -341,22 +341,74 @@ const FileListSimplified = React.forwardRef<
   const parseFileInfos = (values: any[]): {filename: string, blobId?: string}[] => {
     if (!Array.isArray(values)) return [];
     
-    // 将ASCII码数组转换为完整字符串
-    const fullText = values.map(code => String.fromCharCode(code)).join('');
-    
-    // 使用正则表达式匹配文件名和blobId
-    const regex = /([^@]+)@([a-zA-Z0-9]{64})/g;
-    const fileInfos: {filename: string, blobId?: string}[] = [];
-    
-    let match;
-    while ((match = regex.exec(fullText)) !== null) {
-      fileInfos.push({ 
-        filename: match[1], 
-        blobId: match[2] 
-      });
+    try {
+      // 使用TextDecoder正确解码UTF-8编码的字节
+      const uint8Array = new Uint8Array(values);
+      const decoder = new TextDecoder('utf-8');
+      const fullText = decoder.decode(uint8Array);
+      
+      // 使用正则表达式匹配文件名和blobId
+      const regex = /([^@]+)@([a-zA-Z0-9]{64})/g;
+      const fileInfos: {filename: string, blobId?: string}[] = [];
+      
+      let match;
+      while ((match = regex.exec(fullText)) !== null) {
+        // 处理文件名，移除开头的特殊分隔符
+        let filename = match[1];
+        
+        // 移除文件名开头的+号
+        if (filename.startsWith('+')) {
+          filename = filename.substring(1);
+        }
+        
+        // 移除可能的控制字符和其他特殊分隔符
+        filename = filename.replace(/[\x00-\x1F\x7F*]/g, '');
+        
+        // 确保文件名不为空
+        if (filename.trim()) {
+          fileInfos.push({ 
+            filename: filename, 
+            blobId: match[2] 
+          });
+        }
+      }
+      
+      return fileInfos;
+    } catch (error) {
+      console.error("解析文件信息时出错:", error);
+      
+      // 回退到基本方法
+      // 将ASCII码数组转换为完整字符串
+      const fullText = values.map(code => String.fromCharCode(code)).join('');
+      
+      // 使用正则表达式匹配文件名和blobId
+      const regex = /([^@]+)@([a-zA-Z0-9]{64})/g;
+      const fileInfos: {filename: string, blobId?: string}[] = [];
+      
+      let match;
+      while ((match = regex.exec(fullText)) !== null) {
+        // 处理文件名，移除开头的特殊分隔符
+        let filename = match[1];
+        
+        // 移除文件名开头的+号
+        if (filename.startsWith('+')) {
+          filename = filename.substring(1);
+        }
+        
+        // 移除可能的控制字符和其他特殊分隔符
+        filename = filename.replace(/[\x00-\x1F\x7F*]/g, '');
+        
+        // 确保文件名不为空
+        if (filename.trim()) {
+          fileInfos.push({ 
+            filename: filename, 
+            blobId: match[2] 
+          });
+        }
+      }
+      
+      return fileInfos;
     }
-    
-    return fileInfos;
   };
   
   if (loading) {
@@ -398,20 +450,20 @@ const FileListSimplified = React.forwardRef<
           key={index} 
           className="bg-black/30 rounded p-2 text-xs border border-white/5 hover:bg-indigo-900/30 hover:border-indigo-500/30 transition-colors"
         >
-          <div className="truncate text-white font-medium" title={file.filename}>
+          <div className="break-all text-white font-medium" title={file.filename}>
             {file.filename}
           </div>
-          <div className="flex items-center mt-1.5">
-            <div className="truncate font-mono text-indigo-300/70 text-[10px] flex-1 bg-black/20 px-1.5 py-0.5 rounded" title={file.blobId}>
-              {file.blobId ? `${file.blobId.substring(0, 8)}...` : 'N/A'}
+          <div className="flex flex-col mt-2">
+            <div className="break-all font-mono text-indigo-300/80 text-[10px] bg-black/30 px-2 py-1.5 rounded whitespace-normal" title={file.blobId}>
+              {file.blobId ? file.blobId : 'N/A'}
             </div>
             {file.blobId && (
               <button
                 onClick={() => onCopy(file.blobId!)}
-                className={`ml-1.5 p-1 rounded ${copied === file.blobId ? 'bg-green-600/50 text-green-200' : 'bg-indigo-600/50 text-indigo-200 hover:bg-indigo-600/70'} transition-colors`}
+                className={`mt-1.5 p-1.5 rounded-md ${copied === file.blobId ? 'bg-green-600/50 text-green-200' : 'bg-indigo-600/50 text-indigo-200 hover:bg-indigo-600/70'} transition-colors w-full flex items-center justify-center`}
                 title="复制ID"
               >
-                {copied === file.blobId ? '已复制' : <FiCopy size={12} />}
+                {copied === file.blobId ? '已复制' : <><FiCopy size={12} className="mr-1" /> 复制ID</>}
               </button>
             )}
           </div>

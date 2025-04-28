@@ -3,12 +3,7 @@
 import { Transaction } from '@mysten/sui/transactions';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { SuiClient } from '@mysten/sui.js/client';
-
-// 合约信息 - 根据实际情况替换
-const PACKAGE_ID = "0x830281d4528f64ee7263150adea705a5cb6f713ae6ea15108738999118c57311";
-const MODULE_NAME = "kuaidi";
-const FUNCTION_NAME = "upload_file";
-const FUNCTION_NAME2 = "download_file";
+import config from '@/config/config';
 
 /**
  * 上传文件到合约
@@ -23,7 +18,7 @@ export const uploadFileToContract = async (
   signAndExecute: any,
   param1: string, 
   param2: string,
-  collectionObjectId: string = "0x448474f7ef193bc090bc2506c45bf5b8a6e1ab9fd3a422cabafa73357dc64f99",
+  collectionObjectId: string = config.WalrusStorageInfo,
   coinObjectId: string = "0x8"
 ): Promise<boolean> => {
   try {
@@ -32,7 +27,7 @@ export const uploadFileToContract = async (
     
     // 调用合约函数
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE_NAME}::${FUNCTION_NAME}`,
+      target: `${config.SuiPack}::${config.MODULE_NAME}::${config.FUNCTION_NAME}`,
       arguments: [
         txb.object(collectionObjectId),
         txb.pure.string(param1),
@@ -77,7 +72,7 @@ export const uploadFileToContract = async (
 export const inspectTransaction = async (
   suiClient: any,
   peo:string,
-  collectionObjectId: string = "0x448474f7ef193bc090bc2506c45bf5b8a6e1ab9fd3a422cabafa73357dc64f99"
+  collectionObjectId: string = config.WalrusStorageInfo
 ): Promise<any> => {
   try {
     // 创建交易块
@@ -85,7 +80,7 @@ export const inspectTransaction = async (
     
     // 配置交易调用
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE_NAME}::get_pickup_code_list`,
+      target: `${config.SuiPack}::${config.MODULE_NAME}::get_pickup_code_list`,
       arguments: [
         txb.object(collectionObjectId),
         txb.pure.address(peo),
@@ -94,7 +89,7 @@ export const inspectTransaction = async (
 
     // 执行检查
     const txDetails = await suiClient.devInspectTransactionBlock({
-      sender: "0xb84f4663b65048978bc61ca96cf91390f8e8df08855b3f8292413eb9d807cbc0",
+      sender: peo,
       transactionBlock: txb,
     });
 
@@ -127,7 +122,7 @@ export const inspectTransaction = async (
 export const inspectTransaction1 = async (
   suiClient: any,
   pop?: string,
-  collectionObjectId: string = "0x448474f7ef193bc090bc2506c45bf5b8a6e1ab9fd3a422cabafa73357dc64f99",
+  collectionObjectId: string = config.WalrusStorageInfo,
   blobId?: string,
 ): Promise<any> => {
   try {
@@ -137,7 +132,7 @@ export const inspectTransaction1 = async (
     }
     
     // 如果未提供sender地址，使用默认地址
-    const sender = pop || "0xb84f4663b65048978bc61ca96cf91390f8e8df08855b3f8292413eb9d807cbc0";
+    const sender = pop;
     
     console.log(`执行交易检查 - 使用地址: ${sender}`);
     
@@ -146,7 +141,7 @@ export const inspectTransaction1 = async (
     
     // 配置交易调用
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE_NAME}::get_blob_id_from_pickup_code`,
+      target: `${config.SuiPack}::${config.MODULE_NAME}::get_blob_id_from_pickup_code`,
       arguments: [
         txb.object(collectionObjectId),
         txb.pure.string(blobId),
@@ -189,7 +184,7 @@ export const inspectTransaction1 = async (
 export const downloadFileFromContract = async (
   signAndExecute: any,
   blobId: string,
-  collectionObjectId: string = "0x448474f7ef193bc090bc2506c45bf5b8a6e1ab9fd3a422cabafa73357dc64f99",
+  collectionObjectId: string = config.WalrusStorageInfo,
 ): Promise<boolean> => {
   try {
     // 创建交易块
@@ -197,7 +192,7 @@ export const downloadFileFromContract = async (
     
     // 调用合约函数
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE_NAME}::${FUNCTION_NAME2}`,
+      target: `${config.SuiPack}::${config.MODULE_NAME}::${config.FUNCTION_NAME2}`,
       arguments: [
         txb.object(collectionObjectId),
         txb.pure.string(blobId),
@@ -240,7 +235,8 @@ export const downloadFileFromContract = async (
 export const inspectPickupCodeTransaction = async (
   suiClient: SuiClient,
   pickupCode: string,
-  collectionObjectId: string = "0x448474f7ef193bc090bc2506c45bf5b8a6e1ab9fd3a422cabafa73357dc64f99"
+  pop?: string,
+  collectionObjectId: string = config.WalrusStorageInfo
 ): Promise<any> => {
   try {
     // 创建交易块
@@ -248,7 +244,7 @@ export const inspectPickupCodeTransaction = async (
     
     // 配置交易调用
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE_NAME}::get_blob_id_from_pickup_code`,
+      target: `${config.SuiPack}::${config.MODULE_NAME}::get_blob_id_from_pickup_code`,
       arguments: [
         txb.object(collectionObjectId),
         txb.pure.string(pickupCode),
@@ -257,7 +253,7 @@ export const inspectPickupCodeTransaction = async (
 
     // 执行检查
     const txDetails = await suiClient.devInspectTransactionBlock({
-      sender: "0xb84f4663b65048978bc61ca96cf91390f8e8df08855b3f8292413eb9d807cbc0",
+      sender: pop || "",
       transactionBlock: txb,
     });
 
