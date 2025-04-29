@@ -1,4 +1,4 @@
-module DParcel::DParcelsui;
+module dparcel::dparcel;
 
 use std::string::{Self, String};
 use sui::random;
