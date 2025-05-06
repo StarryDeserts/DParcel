@@ -175,10 +175,8 @@ export const inspectTransaction1 = async (
 /**
  * 从合约下载文件
  * @param signAndExecute 签名和执行交易的函数，从组件中获取
- * @param param1 第一个参数 (通常是"testgo")
- * @param blobId 第二个参数 (文件的blobId)
+ * @param blobId 第二个参数 (文件的取件码)
  * @param collectionObjectId 集合对象ID
- * @param coinObjectId 支付对象ID
  * @returns Promise<boolean> 交易是否成功
  */
 export const downloadFileFromContract = async (

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "闪电传递",
-  description: "安全、快速、简单的文件传递平台",
+  title: "DParcel",
+  description: "分布式安全数据传输平台",
 };
 
 export default function RootLayout({

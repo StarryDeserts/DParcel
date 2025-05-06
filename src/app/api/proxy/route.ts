@@ -8,8 +8,18 @@ export async function PUT(request: NextRequest) {
     // 获取请求体
     const blob = await request.blob();
     
+    // 获取URL中的epochs参数
+    const searchParams = request.nextUrl.searchParams;
+    const epochs = searchParams.get('epochs');
+    
+    // 构建请求URL，如果有epochs参数则添加到URL中
+    let requestUrl = `${PUBLISHER}/v1/blobs`;
+    if (epochs) {
+      requestUrl += `?epochs=${epochs}`;
+    }
+    
     // 向Walrus服务器转发请求
-    const response = await fetch(`${PUBLISHER}/v1/blobs`, {
+    const response = await fetch(requestUrl, {
       method: 'PUT',
       body: blob,
       headers: {

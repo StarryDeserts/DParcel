@@ -9,12 +9,14 @@ const WALRUS_BASE_URL = "https://walrus.testnet.sui.io";
  * @param blobData - 要上传的二进制数据（ArrayBuffer）
  * @param fileName - 可选的文件名，用于日志记录
  * @param fileSize - 可选的文件大小，用于日志记录
+ * @param epochs - 可选的存储周期数量
  * @returns 成功时返回blobId，失败时返回false
  */
 export const uploadBlobToWalrus = async (
   blobData: ArrayBuffer | Blob,
   fileName: string = "unknown",
-  fileSize: number = 0
+  fileSize: number = 0,
+  epochs?: number
 ): Promise<string | false> => {
   try {
     // 确保数据是ArrayBuffer类型
@@ -29,10 +31,16 @@ export const uploadBlobToWalrus = async (
     
     // 日志记录
     const displaySize = fileSize || (fileContent ? fileContent.byteLength : 0);
-    console.log(`准备上传数据: ${fileName}, 大小: ${formatFileSize(displaySize)}`);
+    console.log(`准备上传数据: ${fileName}, 大小: ${formatFileSize(displaySize)}${epochs ? `, 存储周期: ${epochs}` : ''}`);
+    
+    // 构建请求URL
+    let requestUrl = API_PROXY;
+    if (epochs) {
+      requestUrl += `?epochs=${epochs}`;
+    }
     
     // 发送数据到API代理
-    const response = await fetch(API_PROXY, {
+    const response = await fetch(requestUrl, {
       method: 'PUT',
       body: fileContent,
       headers: {

@@ -21,6 +21,8 @@ export function FileUploadButton() {
   const [blockchainTxSuccess, setBlockchainTxSuccess] = useState<boolean | null>(null);
   const [inspectionResult, setInspectionResult] = useState<any>(null);
   const [returnValues, setReturnValues] = useState<any>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [epochs, setEpochs] = useState<number>(1);
   
   // 获取SUI客户端和交易执行函数
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
@@ -30,7 +32,11 @@ export function FileUploadButton() {
   // 添加日志函数
   const addLog = (message: string) => {
     console.log(message);
-    setLogs(prevLogs => [...prevLogs, message]);
+    setLogs(prevLogs => {
+      const newLogs = [...prevLogs, message];
+      // 只保留最新的6条日志
+      return newLogs.slice(0, 6);
+    });
   };
 
   // 处理文件选择
@@ -42,6 +48,7 @@ export function FileUploadButton() {
     setBlockchainTxSuccess(null);
     setInspectionResult(null);
     setReturnValues(null);
+    setUploadSuccess(false);
     if (selectedFile) {
       addLog(`已选择文件: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`);
     }
@@ -59,6 +66,18 @@ export function FileUploadButton() {
       fileInputRef.current.value = '';
     }
     setLogs([]);
+    setUploadSuccess(false);
+  };
+
+  // 处理存储周期输入变化
+  const handleEpochsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 确保输入为正整数
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setEpochs(value);
+    } else if (e.target.value === '') {
+      setEpochs(1); // 空输入重置为默认值1
+    }
   };
 
   // 上传文件
@@ -97,9 +116,9 @@ export function FileUploadButton() {
       
       try {
         // 上传文件
-        addLog(`准备上传文件: ${file.name}`);
+        addLog(`准备上传文件: ${file.name}, 存储周期: ${epochs}`);
         const blob = new Blob([fileData]);
-        const result = await uploadBlobToWalrus(blob, file.name);
+        const result = await uploadBlobToWalrus(blob, file.name, file.size, epochs);
         
         if (result) {
           addLog(`上传成功! Blob ID: ${result}`);
@@ -150,6 +169,9 @@ export function FileUploadButton() {
               // 触发文件上传事件，通知其他组件刷新数据
               addLog("通知文件列表更新...");
               eventBus.emit('FILE_UPLOADED', { blobId: result, filename: file.name });
+              
+              // 设置上传成功状态
+              setUploadSuccess(true);
               
             } catch (inspectError) {
               console.error("交易检查错误:", inspectError);
@@ -256,9 +278,28 @@ export function FileUploadButton() {
         )}
       </div>
       
+      {/* 存储周期输入框 */}
+      <div className="mb-4">
+        <label htmlFor="epochs" className="block text-white text-sm mb-1">
+          存储时间（天）
+        </label>
+        <div className="flex items-center ">
+          <input
+            id="epochs"
+            type="number"
+            min="1"
+            value={epochs}
+            onChange={handleEpochsChange}
+            className="w-full px-3 py-2 bg-indigo-900/20 border border-indigo-500/30 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="默认为1"
+          />
+        </div>
+        <p className="text-indigo-300/70 text-xs mt-1">设置文件在区块链上存储的周期数量</p>
+      </div>
+      
       <button 
         onClick={handleStore}
-        disabled={loading || !file}
+        disabled={loading || !file || uploadSuccess}
         className="flex items-center justify-center w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-md py-3 text-white font-medium mb-4 hover:shadow-lg transition-all disabled:opacity-50"
       >
         {loading ? (
@@ -281,7 +322,7 @@ export function FileUploadButton() {
       {logs.length > 0 && (
         <div className="mb-4 p-2 bg-black/30 rounded-md max-h-40 overflow-auto">
           <div className="text-xs font-mono text-green-300">
-            {logs.map((log, index) => (
+            {logs.slice(0, 6).map((log, index) => (
               <div key={index} className="py-0.5">
                 <span className="text-gray-400">[{index+1}]</span> {log}
               </div>
@@ -294,58 +335,6 @@ export function FileUploadButton() {
         <div className="text-red-300 text-sm mt-1 mb-3">
           <FiInfo className="inline-block mr-1" />
           {error}
-        </div>
-      )}
-      
-      {blobId && (
-        <div className="mt-4 p-3 bg-white/10 rounded-md">
-          <h3 className="text-white font-medium mb-2 flex items-center">
-            <FiInfo className="mr-2" /> 文件已上传
-          </h3>
-          <div className="text-white/80 text-sm space-y-1">
-            <p>Blob ID (用于下载): <span className="font-mono text-xs bg-white/10 p-1 rounded">{blobId}</span></p>
-            {blockchainTxSuccess !== null && (
-              <p className={blockchainTxSuccess ? "text-green-300" : "text-yellow-300"}>
-                区块链记录状态: {blockchainTxSuccess ? "成功" : "失败"}
-              </p>
-            )}
-            
-            {/* 添加交易检查结果显示 */}
-            {inspectionResult && (
-              <div className="mt-2 p-2 bg-blue-900/30 rounded-md">
-                <details>
-                  <summary className="text-blue-300 text-xs font-medium mb-1 cursor-pointer">
-                    交易检查结果 (点击展开完整数据)
-                  </summary>
-                  <div className="bg-black/30 p-2 rounded-md mt-2 max-h-48 overflow-auto">
-                    <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
-                      {JSON.stringify(inspectionResult, null, 2)}
-                    </pre>
-                  </div>
-                </details>
-              </div>
-            )}
-            
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button 
-                onClick={downloadFile}
-                className="flex items-center justify-center py-2 px-4 bg-indigo-800 hover:bg-indigo-700 rounded-md text-white text-sm transition-colors"
-                disabled={loading}
-              >
-                <FiLink className="mr-2" />
-                打开下载链接
-              </button>
-              
-              <button 
-                onClick={downloadAndSave}
-                className="flex items-center justify-center py-2 px-4 bg-purple-800 hover:bg-purple-700 rounded-md text-white text-sm transition-colors"
-                disabled={loading}
-              >
-                <FiSave className="mr-2" />
-                下载并保存
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

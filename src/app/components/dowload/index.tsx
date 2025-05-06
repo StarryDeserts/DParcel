@@ -221,7 +221,7 @@ export function SimpleDownloader() {
   // 查询ID信息
   const handleQueryBlobId = async () => {
     if (!blobId.trim()) {
-      setError("请输入 Blob ID");
+      setError("请输入取件码");
       return;
     }
     
@@ -386,14 +386,14 @@ export function SimpleDownloader() {
   
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-white mb-4">ID 查询</h2>
+      <h2 className="text-xl font-semibold text-white mb-4">文件查询</h2>
       
       {/* ID输入区域 */}
       <div className="space-y-3">
-        {/* Blob ID 输入 */}
+        {/* Blob ID 输入改为取件码 */}
         <div>
           <label htmlFor="blobId" className="block text-sm font-medium text-indigo-200 mb-1">
-            Blob ID
+            取件码
           </label>
           <input
             id="blobId"
@@ -401,7 +401,7 @@ export function SimpleDownloader() {
             value={blobId}
             onChange={handleBlobIdChange}
             className="w-full px-4 py-2 bg-black/30 border border-indigo-500/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="输入要查询的ID..."
+            placeholder="请输入取件码..."
             disabled={loading}
           />
         </div>
@@ -423,18 +423,10 @@ export function SimpleDownloader() {
           ) : (
             <>
               <FiSearch className="mr-2" />
-              查询ID信息
+              查询文件
             </>
           )}
         </button>
-      </div>
-      
-      {/* 提示信息 */}
-      <div className="mb-4 p-4 bg-indigo-600/20 rounded-lg text-indigo-200 text-sm border border-indigo-500/30">
-        <p className="flex items-center">
-          <FiInfo className="mr-2 flex-shrink-0" />
-          <span>输入Blob ID，点击查询按钮获取关联信息</span>
-        </p>
       </div>
       
       {/* 解析结果显示 */}
@@ -454,10 +446,6 @@ export function SimpleDownloader() {
                 </div>
                 {file.blobId && (
                   <div className="mt-2">
-                    <div className="mb-3 p-2 bg-indigo-900/30 rounded text-indigo-200 text-center text-xs">
-                      <span className="font-medium">✓ 成功获取ID和文件名</span>
-                    </div>
-                    
                     {/* 文件名输入 */}
                     <div className="mb-3">
                       <label htmlFor="downloadFilename" className="block text-xs font-medium text-indigo-200 mb-1">
@@ -473,32 +461,25 @@ export function SimpleDownloader() {
                       />
                     </div>
                     
-                    {/* 下载按钮组 */}
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleOpenDownload(file.blobId!)}
-                        className="flex-1 px-2 py-1 bg-indigo-700 hover:bg-indigo-600 rounded text-xs text-white flex items-center justify-center transition-colors"
-                      >
-                        <FiLink className="mr-1" />
-                        打开链接
-                      </button>
+                    {/* 只保留下载按钮 */}
+                    <div>
                       <button
                         onClick={() => handleDownloadAndSave(file.blobId!, file)}
                         disabled={downloadLoading}
-                        className="flex-1 px-2 py-1 bg-purple-700 hover:bg-purple-600 disabled:bg-purple-800/50 disabled:text-white/50 rounded text-xs text-white flex items-center justify-center transition-colors"
+                        className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800/50 disabled:text-white/50 rounded text-white font-medium flex items-center justify-center transition-colors"
                       >
                         {downloadLoading ? (
                           <>
-                            <svg className="animate-spin -ml-0.5 mr-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin -ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            下载中
+                            下载中...
                           </>
                         ) : (
                           <>
-                            <FiDownload className="mr-1" />
-                            下载保存
+                            <FiDownload className="mr-2" />
+                            下载文件
                           </>
                         )}
                       </button>
@@ -516,20 +497,6 @@ export function SimpleDownloader() {
         <div className="mb-4 p-4 bg-red-500/20 rounded-lg text-red-300 text-sm border border-red-500/30 flex items-start">
           <FiInfo className="mr-2 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
-        </div>
-      )}
-      
-      {/* 日志输出 */}
-      {logs.length > 0 && (
-        <div className="p-3 bg-black/30 rounded-lg border border-indigo-500/20 max-h-80 overflow-auto">
-          <div className="text-xs font-mono text-green-300">
-            {logs.map((log, index) => (
-              <div key={index} className="py-0.5 flex">
-                <span className="text-indigo-400 mr-2 select-none">{`[${index+1}]`}</span> 
-                <span className="whitespace-pre-wrap break-all">{log}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>

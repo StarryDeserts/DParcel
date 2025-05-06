@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ConnectButton } from '@mysten/dapp-kit';
 import "@mysten/dapp-kit/dist/index.css";
-import { FiEye, FiShield, FiFileText, FiDownloadCloud, FiCopy, FiList, FiDownload, FiRefreshCw } from 'react-icons/fi';
+import { FiEye, FiShield, FiFileText, FiDownloadCloud, FiCopy, FiList, FiDownload, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 import { FileUploadButton } from "./components/upload/EncryptedUploader";
-import { useSuiClient, useCurrentAccount } from "@mysten/dapp-kit";
-import { inspectTransaction } from "@/utils/moveupload";
+import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { inspectTransaction, downloadFileFromContract } from "@/utils/moveupload";
 import { openDownloadLink, downloadAndSaveFile } from "@/utils/walrusupload";
 import { SimpleDownloader } from "./components/dowload";
 import { eventBus } from "@/utils/eventBus";
@@ -86,6 +86,13 @@ export default function Home() {
                 <span>DParcel v1.0</span>
               </div>
             </div>
+
+            {/* 底部提示 */}
+            <div className="border-t border-white/10 p-2">
+              <div className="text-xs text-white/50 text-center">
+                可复制ID或删除文件
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -133,6 +140,23 @@ export default function Home() {
         ::-webkit-scrollbar-thumb:hover {
           background: rgba(99, 102, 241, 0.7);
         }
+        
+        /* 文件列表滚动条样式 */
+        .file-list-container::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .file-list-container::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        .file-list-container::-webkit-scrollbar-thumb {
+          background: rgba(99, 102, 241, 0.6);
+          border-radius: 3px;
+        }
+        .file-list-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(99, 102, 241, 0.8);
+        }
       `}</style>
     </div>
   );
@@ -169,14 +193,14 @@ function FileListPanel() {
       </div>
       
       {/* 列表内容 */}
-      <div className="max-h-[calc(100vh-180px)] overflow-y-auto p-2">
+      <div className="h-80 max-h-[calc(100vh-180px)] overflow-y-auto p-2 file-list-container">
         <SimpleFileList />
       </div>
       
       {/* 底部提示 */}
       <div className="border-t border-white/10 p-2">
         <div className="text-xs text-white/50 text-center">
-          点击复制按钮可复制ID
+          可复制ID或删除文件
         </div>
       </div>
     </div>
@@ -262,12 +286,17 @@ const FileListSimplified = React.forwardRef<
   const [files, setFiles] = useState<{filename: string, blobId?: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectError, setConnectError] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   
   // 将suiClient钩子移到组件顶层
   const suiClient = useSuiClient();
   
   // 使用钱包连接状态
   const currentAccount = useCurrentAccount();
+  
+  // 使用签名和执行交易的hook
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   // 数据获取函数
   const fetchData = async () => {
@@ -411,6 +440,46 @@ const FileListSimplified = React.forwardRef<
     }
   };
   
+  // 处理删除操作
+  const handleDelete = async (blobId: string) => {
+    try {
+      if (!currentAccount?.address) {
+        console.log("钱包未连接，无法执行删除操作");
+        return;
+      }
+
+      // 设置正在删除状态
+      setDeleting(blobId);
+      
+      console.log(`正在删除文件: ${blobId}`);
+      
+      // 调用删除功能
+      const success = await downloadFileFromContract(
+        signAndExecute,
+        blobId
+      );
+      
+      if (success) {
+        console.log(`文件ID: ${blobId} 删除成功`);
+        setDeleteSuccess(blobId);
+        
+        // 删除成功后立即刷新数据
+        fetchData();
+        
+        // 2秒后只重置删除成功状态
+        setTimeout(() => {
+          setDeleteSuccess(null);
+        }, 2000);
+      } else {
+        console.error(`文件删除失败: ${blobId}`);
+      }
+    } catch (err) {
+      console.error("删除文件时出错:", err);
+    } finally {
+      setDeleting(null);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="h-20 flex items-center justify-center">
@@ -458,13 +527,41 @@ const FileListSimplified = React.forwardRef<
               {file.blobId ? file.blobId : 'N/A'}
             </div>
             {file.blobId && (
-              <button
-                onClick={() => onCopy(file.blobId!)}
-                className={`mt-1.5 p-1.5 rounded-md ${copied === file.blobId ? 'bg-green-600/50 text-green-200' : 'bg-indigo-600/50 text-indigo-200 hover:bg-indigo-600/70'} transition-colors w-full flex items-center justify-center`}
-                title="复制ID"
-              >
-                {copied === file.blobId ? '已复制' : <><FiCopy size={12} className="mr-1" /> 复制ID</>}
-              </button>
+              <div className="mt-1.5 flex space-x-2">
+                <button
+                  onClick={() => onCopy(file.blobId!)}
+                  className={`p-1.5 rounded-md ${copied === file.blobId ? 'bg-green-600/50 text-green-200' : 'bg-indigo-600/50 text-indigo-200 hover:bg-indigo-600/70'} transition-colors flex-1 flex items-center justify-center`}
+                  title="复制ID"
+                >
+                  {copied === file.blobId ? '已复制' : <><FiCopy size={12} className="mr-1" /> 复制ID</>}
+                </button>
+                <button
+                  onClick={() => handleDelete(file.blobId!)}
+                  disabled={deleting === file.blobId}
+                  className={`p-1.5 rounded-md ${
+                    deleteSuccess === file.blobId 
+                      ? 'bg-green-600/50 text-green-200' 
+                      : deleting === file.blobId
+                        ? 'bg-gray-600/50 text-gray-300 cursor-not-allowed'
+                        : 'bg-indigo-600/50 text-indigo-200 hover:bg-indigo-600/70'
+                  } transition-colors flex-1 flex items-center justify-center`}
+                  title="删除文件"
+                >
+                  {deleteSuccess === file.blobId ? (
+                    <>已删除</>
+                  ) : deleting === file.blobId ? (
+                    <>
+                      <svg className="animate-spin -ml-0.5 mr-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      删除中
+                    </>
+                  ) : (
+                    <><FiTrash2 size={12} className="mr-1" /> 删除</>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>
