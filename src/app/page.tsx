@@ -349,6 +349,14 @@ const FileListSimplified = React.forwardRef<
     return () => clearInterval(interval);
   }, [suiClient, currentAccount]); // 添加currentAccount作为依赖项
   
+  // 监听钱包账户变化，当钱包切换行号时重新获取数据
+  useEffect(() => {
+    console.log("钱包账户发生变化，重新获取数据");
+    if (currentAccount?.address) {
+      fetchData();
+    }
+  }, [currentAccount?.address]); // 仅监听钱包地址变化
+  
   // 监听文件上传事件
   useEffect(() => {
     // 注册事件监听器

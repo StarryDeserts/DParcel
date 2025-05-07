@@ -230,6 +230,9 @@ export function SimpleDownloader() {
     setProcessedData([]);
     addLog(`开始查询 ID: ${blobId.trim()}...`);
     
+    // 用于跟踪是否找到文件信息
+    let foundFileInfo = false;
+    
     try {
       // 传入钱包地址如果已连接，否则使用默认地址
       const senderAddress = currentAccount?.address || undefined;
@@ -250,6 +253,7 @@ export function SimpleDownloader() {
           const files = parseFileInfos(byteArray);
           if (files.length > 0) {
             setProcessedData(files);
+            foundFileInfo = true;
             addLog(`成功解析到文件信息:`);
             files.forEach((file, index) => {
               addLog(`[${index + 1}] Walrus ID: ${file.blobId}`);
@@ -274,6 +278,7 @@ export function SimpleDownloader() {
               }]);
               setDownloadFilename('downloadedFile.dat');
               addLog(`检测到可能的直接ID: ${stringValue.trim()}`);
+              foundFileInfo = true;
             }
           }
         } else if (typeof returnValue[0] === 'string') {
@@ -291,6 +296,7 @@ export function SimpleDownloader() {
               blobId: extractedId
             }]);
             setDownloadFilename('downloadedFile.dat');
+            foundFileInfo = true;
           }
         } else {
           // 其他类型直接使用JSON序列化
@@ -307,6 +313,7 @@ export function SimpleDownloader() {
                 blobId: idMatch[1]
               }]);
               setDownloadFilename('downloadedFile.dat');
+              foundFileInfo = true;
             }
           } catch (err) {
             // 忽略解析错误
@@ -322,6 +329,11 @@ export function SimpleDownloader() {
       setError(`查询失败: ${errorMessage}`);
     } finally {
       setLoading(false);
+      
+      // 查询完成后，如果没有找到任何文件信息，显示"未查询到文件"
+      if (!foundFileInfo && !error) {
+        setError("未查询到文件");
+      }
     }
   };
   
