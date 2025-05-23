@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# D-parcel: Secure, Decentralized File Sharing on Sui
 
-## Getting Started
+## What is D-parcel?
 
-First, run the development server:
+D-parcel is a revolutionary "decentralized file locker" built on the Sui blockchain, leveraging Walrus for decentralized storage and Seal for advanced access control. It redefines file sharing by giving users unprecedented control, security, and privacy over their digital assets.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**Imagine a world where you can securely share files with anyone, for a specific duration, using a simple "pickup code," all without relying on a central authority!**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Core Architecture & How It Works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+D-parcel's magic lies in the synergy of three powerful Web3 technologies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Sui Blockchain:** Provides a high-performance, scalable, and secure Layer 1 foundation. All critical metadata, access policies, and file lifecycle rules are managed as programmable objects on Sui, ensuring transparency and tamper-proof execution.
+2. **Walrus Decentralized Storage:** User files are encrypted client-side and then stored as "blobs" on Walrus. This offers resilient, censorship-resistant storage. Crucially, **senders can specify the exact "existence time" for their files on Walrus**, enabling true temporary storage.
+3. **Seal Access Control Protocol:** This is where the "pickup code" comes to life. Seal manages the cryptographic secrets and enforces on-chain access policies. When a file is uploaded, a unique pickup code is generated. This code isn't just a password; it's a token that unlocks access based on rules defined on the Sui blockchain (e.g., expiry time). Seal's threshold encryption ensures that even if some key servers are compromised, your data remains secure.
 
-## Learn More
+**The Flow:**
 
-To learn more about Next.js, take a look at the following resources:
+1. **Connect Wallet:** Users connect their Sui-compatible wallet.
+2. **Upload & Set Duration:** Users upload a file and specify how long it should exist on Walrus.
+3. **Get Pickup Code:** A unique, secure pickup code is generated via Seal.
+4. **Share Code:** The sender shares this code with the intended recipient.
+5. **Recipient Retrieves:** The recipient uses the pickup code on D-parcel to download the file directly from Walrus after Seal verifies the code against on-chain policies.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## What Makes D-parcel Exciting & Unique?
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+D-parcel isn't just another file-sharing service. Its decentralized architecture unlocks capabilities that are simply not feasible with traditional, centralized solutions:
 
-## Deploy on Vercel
+- **True User Sovereignty:**
+  - **You control the lifespan:** Define precisely how long your file exists. No more relying on a platform's arbitrary deletion policies. This is perfect for "digital dead drops" or time-sensitive information.
+  - **You control access:** The pickup code, governed by on-chain Seal policies, means only those you authorize can access the file, and only under the conditions you set.
+- **Unparalleled Security & Privacy:**
+  - **Client-Side Encryption:** Files are encrypted *before* they leave your device.
+  - **Decentralized Trust:** No single entity holds all the keys or all the data. Walrus distributes storage, and Seal decentralizes key management.
+  - **On-Chain Verifiable Policies:** Access rules are transparent and enforced by the Sui blockchain, not hidden server-side logic.
+- **Censorship Resistance:** Files stored on Walrus are significantly harder to take down or censor compared to centralized alternatives.
+- **Programmable Access:**
+  - **Time-locked access via pickup codes:** Grant access for specific windows, enforced by Seal and Sui.
+  - **Future possibilities:** Imagine pickup codes that only work if the recipient holds a specific NFT, or codes that expire after a single use, all defined and enforced on-chain!
+- **Cost-Effective Large File Storage:** Walrus is designed for efficient storage of large binary files, making D-parcel economically viable for various use cases.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**D-parcel empowers users with a file-sharing experience that is genuinely secure, private, and self-determined, showcasing the true potential of composable Web3 technologies!**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Get Involved!
+
+[D-parcel](https://d-parcel.vercel.app/)
